@@ -1,5 +1,7 @@
 package com.habbal.redditclone.controller;
 
+import com.habbal.redditclone.dto.AuthenticationResponse;
+import com.habbal.redditclone.dto.LoginRequest;
 import com.habbal.redditclone.dto.RegisterRequest;
 import com.habbal.redditclone.service.AuthService;
 import lombok.AllArgsConstructor;
@@ -20,9 +22,14 @@ public class AuthController {
         return new ResponseEntity<>("User created",HttpStatus.CREATED);
     }
 
-    @GetMapping("accountVerification/{token}")
+    @GetMapping("/accountVerification/{token}")
     public ResponseEntity<String> verifyAccount(@PathVariable String token) {
         authService.verifyAccount(token);
         return new ResponseEntity<>("Account was activated successfully", HttpStatus.OK);
+    }
+
+    @PostMapping("/login")
+    public AuthenticationResponse login(@RequestBody LoginRequest loginRequest) {
+        return authService.login(loginRequest);
     }
 }
