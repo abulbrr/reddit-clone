@@ -16,3 +16,4 @@ Rest API includes:
   - a verification token is sent to the user email when registered and the account is only enabled after the token is activated.
 - Login
   - Logging in with username and password returns a jwt which can be used for future authentication.
+  - Every next request needs the bearer token in order to be authorized
