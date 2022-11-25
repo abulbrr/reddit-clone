@@ -17,9 +17,8 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest) {
-        authService.register(registerRequest);
-        return new ResponseEntity<>("User created",HttpStatus.CREATED);
+    public ResponseEntity<Long> register(@RequestBody RegisterRequest registerRequest) {
+        return new ResponseEntity<>(authService.register(registerRequest), HttpStatus.CREATED);
     }
 
     @GetMapping("/accountVerification/{token}")

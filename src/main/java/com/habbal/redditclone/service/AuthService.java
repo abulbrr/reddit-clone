@@ -36,7 +36,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public void register(RegisterRequest registerRequest) {
+    public Long register(RegisterRequest registerRequest) {
         User user = User.builder()
                 .email(registerRequest.getEmail())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
@@ -45,11 +45,13 @@ public class AuthService {
                 .enabled(false)
                 .build();
 
-        userRepository.save(user);
+        User createdUser = userRepository.save(user);
 
         String verificationToken = generateVerificationToken(user);
 
         mailService.sendAccountActivationEmail(user.getEmail(), verificationToken);
+
+        return createdUser.getId();
     }
 
     public void verifyAccount(String token) {

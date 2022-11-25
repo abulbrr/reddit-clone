@@ -2,7 +2,7 @@ package com.habbal.redditclone.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
@@ -15,7 +15,7 @@ import static java.util.Date.from;
 
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class JwtProvider {
     private final SecretKey secretKey;
 
