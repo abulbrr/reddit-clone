@@ -1,21 +1,44 @@
 package com.habbal.redditclone.security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
-import static io.jsonwebtoken.security.Keys.secretKeyFor;
+import javax.crypto.SecretKey;
+import java.time.Instant;
+
+import static java.util.Date.from;
+
 
 @Service
+@AllArgsConstructor
 public class JwtProvider {
+    private final SecretKey secretKey;
+
+    @Value("${jwt.expiration.time}")
+    private Long jwtExpirationInMilliseconds;
 
     public String generateToken(Authentication authentication) {
         User principal = (User) authentication.getPrincipal();
         return Jwts.builder()
                 .setSubject(principal.getUsername())
-                .signWith(secretKeyFor(SignatureAlgorithm.HS512))
+                .setIssuedAt(from(Instant.now()))
+                .setExpiration(from(Instant.now().plusMillis(jwtExpirationInMilliseconds)))
+                .signWith(secretKey)
                 .compact();
+    }
+
+    public boolean validateToken(String jwt) {
+        Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(jwt);
+        return true;
+    }
+
+    public String getUsernameFromToken(String jwt) {
+        Claims claims = Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(jwt).getBody();
+        return claims.getSubject();
     }
 }
