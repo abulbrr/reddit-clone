@@ -31,6 +31,14 @@ public class JwtProvider {
                 .signWith(secretKey)
                 .compact();
     }
+    public String generateTokenWithUserName(String username) {
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(from(Instant.now()))
+                .setExpiration(from(Instant.now().plusMillis(jwtExpirationInMilliseconds)))
+                .signWith(secretKey)
+                .compact();
+    }
 
     public boolean validateToken(String jwt) {
         Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(jwt);
@@ -41,4 +49,9 @@ public class JwtProvider {
         Claims claims = Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(jwt).getBody();
         return claims.getSubject();
     }
+
+    public Long getJwtExpirationInMillis() {
+        return jwtExpirationInMilliseconds;
+    }
+
 }

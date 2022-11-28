@@ -2,6 +2,7 @@ package com.habbal.redditclone.service;
 
 import com.habbal.redditclone.dto.AuthenticationResponse;
 import com.habbal.redditclone.dto.LoginRequest;
+import com.habbal.redditclone.dto.RefreshTokenRequest;
 import com.habbal.redditclone.dto.RegisterRequest;
 import com.habbal.redditclone.exception.InvalidTokenException;
 import com.habbal.redditclone.exception.UserNotFoundException;
@@ -35,6 +36,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public Long register(RegisterRequest registerRequest) {
@@ -68,7 +70,24 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authenticate);
         String token = jwtProvider.generateToken(authenticate);
 
-        return new AuthenticationResponse(token, loginRequest.getUsername());
+        return AuthenticationResponse.builder()
+                .authenticationToken(token)
+                .username(loginRequest.getUsername())
+                .refreshToken(refreshTokenService.generateRefreshToken().getToken())
+                .expiresAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
+                .build();
+    }
+
+    public AuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
+        refreshTokenService.validateRefreshToken(refreshTokenRequest.getToken());
+        String token = jwtProvider.generateTokenWithUserName(refreshTokenRequest.getUsername());
+
+        return AuthenticationResponse.builder()
+                .authenticationToken(token)
+                .refreshToken(refreshTokenRequest.getToken())
+                .expiresAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
+                .username(refreshTokenRequest.getUsername())
+                .build();
     }
 
     private String generateVerificationToken(User user) {
@@ -100,5 +119,9 @@ public class AuthService {
 
         return userRepository.findByUsername(principal.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("Username not found " + principal.getUsername()));
+    }
+
+    public void deleteRefreshToken(RefreshTokenRequest refreshTokenRequest) {
+        refreshTokenService.deleteRefreshToken(refreshTokenRequest.getToken());
     }
 }
