@@ -15,22 +15,23 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @AllArgsConstructor
+@Transactional
 public class AuthService {
 
     private final UserRepository userRepository;
     private final VerificationTokenRepository verificationTokenRepository;
     private final MailService mailService;
-
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
@@ -51,7 +52,7 @@ public class AuthService {
 
         mailService.sendAccountActivationEmail(user.getEmail(), verificationToken);
 
-        return createdUser.getId();
+        return createdUser.getUserId();
     }
 
     public void verifyAccount(String token) {
@@ -82,13 +83,22 @@ public class AuthService {
     }
 
     private void fetchAndEnableUser(VerificationToken verificationToken) {
-        Long userId = verificationToken.getUser().getId();
+        Long userId = verificationToken.getUser().getUserId();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User [" + verificationToken.getUser().getEmail() + "] was not found"));
 
+        verificationTokenRepository.delete(verificationToken);
+
         user.setEnabled(true);
         userRepository.save(user);
-        verificationTokenRepository.delete(verificationToken);
+    }
+
+    public User getCurrentUser() {
+        org.springframework.security.core.userdetails.User principal =
+                (org.springframework.security.core.userdetails.User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        return userRepository.findByUsername(principal.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Username not found " + principal.getUsername()));
     }
 }

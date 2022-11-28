@@ -15,12 +15,12 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "reddit_user")
+@Table(name = "user_account")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
+    private Long userId;
 
     @NotBlank(message = "Username is required")
     private String username;
